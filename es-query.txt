@@ -1,0 +1,154 @@
+PUT car-master/_mapping
+{
+  "properties": {
+    "id": {
+      "type": "keyword"
+    },
+    "brand": {
+      "type": "keyword"
+    },
+    "model": {
+      "type": "keyword"
+    },
+    "price": {
+      "type": "long"
+    },
+    "fuel": {
+      "type": "keyword"
+    },
+    "image_url": {
+      "type": "keyword"
+    },
+    "color": {
+      "type": "keyword"
+    }
+  }
+}
+
+PUT car-master.v3
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 1
+  },
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "brand": {
+        "type": "keyword"
+      }
+    }
+  }
+}
+
+PUT car-master.v3/_mapping
+{
+  "properties": {
+    "model": {
+      "type": "keyword"
+    },
+    "price": {
+      "type": "long"
+    }
+  }
+}
+
+GET car-master.v3/_mapping
+
+# 와일드 카드 허용
+PUT /_cluster/settings
+{
+  "transient": {
+    "action.destructive_requires_name": false
+  }
+}
+
+DELETE car-master
+
+PUT car-master
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 1
+  },
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "brand": {
+        "type": "keyword"
+      }
+    }
+  }
+}
+
+#  _close 상태에서는 데이터 삽입이 불가능,
+POST car-master.v2/_close
+
+#  _open 상태에서는 데이터 삽입이 가능 -> 주의사항 : open 하는 경우 성능 저하가 발생할 수 있음
+POST car-master.v2/_open
+
+# 데이터 삽입
+PUT car-master/_doc/1
+{
+  "id": "1",
+  "brand": "BMW"
+}
+
+PUT car-master/_doc/2
+{
+  "id": "2",
+  "brand": "Benz"
+}
+
+# 재색인 - car-master -> car-master.v2
+POST /_reindex?pretty=true
+{
+  "source": {
+    "index": "car-master",
+    "query": {
+      "term": {
+        "brand": {
+          "value": "BMW"
+        }
+      }
+    }
+  },
+  "dest": {
+    "index": "car-master.v2"
+  }
+}
+
+# 인덱스 Refresh
+
+# 기본 색인은 1초마다 자동으로 수행
+
+PUT car-master.v3
+{
+  "settings": {
+    "index": {
+      "refresh_interval": "-1"
+    }
+  }
+}
+
+
+# v3 에 데이터 삽입
+PUT car-master.v3/_doc/1
+{
+  "brand": "hyundai"
+}
+
+# v3 데이터 조회 -> 데이터가 없음
+GET car-master.v3/_search
+
+# v3 인덱스 Refresh
+POST car-master.v3/_refresh
+
+# v3 데이터 조회 -> 데이터가 있음
+GET car-master.v3/_search
+
+#
