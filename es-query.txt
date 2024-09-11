@@ -152,3 +152,97 @@ POST car-master.v3/_refresh
 GET car-master.v3/_search
 
 #
+
+POST _reindex
+{
+  "source": {
+    "index": "search-used-car",
+    "_source": [
+      "id",
+      "region",
+      "price",
+      "year",
+      "model",
+      "fuel",
+      "odometer",
+      "transmission",
+      "drive",
+      "type",
+      "paint_color",
+      "image_url",
+      "country",
+      "lat",
+      "lng",
+      "posting_date",
+      "brand"
+    ]
+  },
+  "dest": {
+    "index": "car-master.v4"
+  },
+  "script": {
+    "source": """
+        ctx._source.color = ctx._source.paint_color;
+        ctx._source.remove("paint_color");
+        ctx._source.location = [ctx._source.lat, ctx._source.lng];
+               """
+  }
+}
+
+GET search-used-car/_search
+
+## 동적 매핑
+PUT car-master.dynamic.v2
+{
+  "mappings": {
+    "dynamic": "strict"
+  }
+}
+
+## 데이터 추가
+PUT car-master.dynamic.v2/_doc/1
+{
+  "brand": "BMW",
+  "model": "320d",
+  "price": 5000
+}
+
+## 인덱스 매핑 변경
+PUT car-master.dynamic.v2/_mapping
+{
+  "dynamic": "true"
+}
+
+GET car-master.dynamic.v2/_mapping
+GET car-master.static
+## 정적 매핑
+PUT car-master.static
+{
+  "mappings": {
+    "properties": {
+      "brand": {
+        "type": "keyword"
+      }
+    }
+  }
+}
+
+PUT car-master.static/_doc/1
+{
+  "brand": "1"
+}
+
+GET car-master.static/_search
+
+PUT car-master.final
+{
+  "mappings": {
+    "properties": {
+      "brand": {
+        "type": "keyword"
+      }
+    }
+  }
+}
+
+PUT car-master.static.constant_keyword
