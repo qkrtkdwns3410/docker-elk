@@ -10,3 +10,17 @@ network.host: 0.0.0.0
 #
 xpack.license.self_generated.type: trial
 xpack.security.enabled: true
+
+analysis:
+  filter:
+    synonym_filter:
+      type: synonym
+      synonyms_path: dictionary/synonym.txt
+    stop_filter:
+      type: stop
+      stopwords_path: dictionary/stopword.txt
+  tokenizer:
+    nori_tokenizer:
+      type: nori
+      user_dictionary: dictionary/userdict_ko.txt
+      discard_punctuation: true
